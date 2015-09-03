@@ -1,0 +1,30 @@
+#!/bin/bash
+HERE=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+WEBDIR="${HERE}/steamlug"
+TEMPDIR="${WEBDIR}/temp"
+
+# Fetch news rss feed
+wget -q -N "http://steamcommunity.com/groups/steamlug/rss" -O ${TEMPDIR}/rss.xml
+if [[ $(xmllint --xpath "string(/rss/channel/title)" "${TEMPDIR}/rss.xml") == "Linux User Group RSS Feed" ]]; then
+	mv "${TEMPDIR}/rss.xml" "${WEBDIR}/"
+	echo "Grabbed news feed"
+else
+	echo "FAILED to grab news feed"
+fi
+
+# Fetch previous, current and next 2 months of events
+for i in {-1..2}
+do
+	MONTH="$(expr $(date -d "$(date +%m) + ${i} month" +%m) + 0)"
+	PADDEDMONTH=$(printf %02d $MONTH)
+	YEAR="$(date -d "$(date +%m) + ${i} month" +%Y)"
+	FILENAME="events_${MONTH}_${YEAR}.xml"
+	wget -q -N "http://steamcommunity.com/groups/steamlug/events?xml=1&action=eventFeed&month=${MONTH}&year=${YEAR}" -O "${TEMPDIR}/${FILENAME}"
+	if [[ $(xmllint --xpath "string(/response/results)" "${TEMPDIR}/${FILENAME}") == "OK" ]]; then
+		mv "${TEMPDIR}/${FILENAME}" "${WEBDIR}/"
+		echo "Grabbed ${YEAR}-${PADDEDMONTH} events"
+	else
+		echo "FAILED to grab ${YEAR}-${PADDEDMONTH}"
+	fi
+done
+

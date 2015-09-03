@@ -1,0 +1,6 @@
+<?php
+// These are locations pulled out from the rest of the repo, to give some flexibility
+
+$includeLocation = '/var/www/dev.steamlug.org';
+
+$scriptsLocation = '/var/www/slug-scripts';
